@@ -1,21 +1,42 @@
 from random import randint
+from datetime import datetime
 
+class ScoreBoard():
+    def __init__(self):
+        self.win_counter = {'bot': 0, 'user': 0}
 
-win_counter = {'bot': 0, 'user': 0}
+    def cleen_score(self):
+        self.win_counter['bot'] = 0
+        self.win_counter['user'] = 0
+
+    def update_score(self, is_user_win: bool):
+        if is_user_win:
+            self.win_counter['user'] += 1
+        else:
+            self.win_counter['bot'] += 1
+
+    def print_score(self):
+        if self.win_counter['user'] == self.win_counter['bot']:
+            print('Вам не удалось победить, но вы и не проиграли! Попробуйте еще ;-)', end=' ')
+        elif self.win_counter['user'] > self.win_counter['bot']:
+            print(f"Поздравляю! Вы победили со счетом", end=' ')
+        else:
+            print(f"Поражение со счетом:", end=' ')
+        print(f"{self.win_counter['user']}:{self.win_counter['bot']}", end='\n\n')
+
+    def save_score(self, file_name='score_log.txt'):
+        text = f"{datetime.now()} СЧЕТ: Вы = {self.win_counter['user']}, "\
+        f"Бот = {self.win_counter['bot']}, раундов сыграно: {number_rounds}\n"
+        try:
+            with open(file_name, 'a',  encoding='utf-8') as file:
+                file.write(text)
+        except IOError as err:
+            print(_('Ошибка при сохранении файла:'), err)
+
+sb = ScoreBoard()
 global number_rounds
 number_rounds = 3
 choice = {1: 'Камень', 2: 'Ножницы', 3: 'Бумага'}
-
-#  TODO: реализовать возможность конфигкрирования игры
-class configuration():
-    def __init__(self):
-        self.read() 
-    
-    def read(self):
-        pass
-
-    def chenge(self):
-        pass
 
 def next_bot_move():
     bot_move = randint(1, 3)
@@ -51,23 +72,13 @@ def get_winner(bot_move: int, user_move: int):
         print('Ничья', end='\n\n')
     elif win_conditions[user_move][0] == bot_move:
         print(win_conditions[user_move][1], 'Ваша победа в раунде!', end='\n\n')
-        win_counter['user'] += 1
+        sb.update_score(is_user_win=True)
     elif loss_conditions[user_move][0] == bot_move:
         print(loss_conditions[user_move][1], 'Раунд в пользу соперника...', end='\n\n')
-        win_counter['bot'] += 1
+        sb.update_score(is_user_win=False)
     else:
         print('Если вы это видите, значит разработчик что-то не учел в этой игре. '\
               'Пожалуйста сообщите ему об этом!')
-
-def game_result():
-    if win_counter['user'] == win_counter['bot']:
-        print('Вам не удалось победить, но вы и не проиграли! Попробуйте еще ;-)', end=' ')
-    elif win_counter['user'] > win_counter['bot']:
-        print(f"Поздравляю! Вы победили со счетом", end=' ')
-    else:
-        print(f"Поражение со счетом:", end=' ')
-    print(f"{win_counter['user']}:{win_counter['bot']}", end='\n\n')
-
 
 def game_menu():
     menu = f"""
@@ -88,15 +99,15 @@ def game_menu():
 def start_game():
     print('Начало игры')
     # Чтобы предыдущая игра не влияла на результат - обнуляем счет игры
-    win_counter['bot'] = 0
-    win_counter['user'] = 0
+    sb.cleen_score()
     for round in range(number_rounds):
         # Для корректного отображения номера раунда 
         print(f'Раунд {round + 1}:')
         user = next_user_move()
         bot = next_bot_move()
         get_winner(bot_move=bot, user_move=user)
-    game_result()
+    sb.print_score()
+    sb.save_score()
 
 def set_number_rounds():
     while True:
